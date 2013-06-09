@@ -12,6 +12,7 @@ var apiKey = 'your-consumer-key'; // http://www.tumblr.com/docs/en/api/v2
 var blogAddress = 'your-address.tumblr.com';
 var outputPath = '/your/path';
 var collectionName = 'name' // the name of your collection
+var imageDirectoryPath = '/assets/images'; // the path to save images
 
 var tumblr = new tumblrApi(
   {
@@ -26,31 +27,30 @@ tumblr.get('/posts', {hostname: blogAddress}, function(json){
 
   var tumblrUrls = [];
 
-	for (var i in json.posts)
-	{
-		var obj = json.posts[i];
-		var meta = "";
+  for (var i in json.posts)
+  {
+    var obj = json.posts[i];
+    var meta = "";
     var filename = obj.slug + ".md";
-		var savePath = outputPath.replace(/\/$/, "") + "/collections/" + collectionName + "/" + filename;
-		var body = (obj.body === undefined) ? toMarkdown(obj.caption) : toMarkdown(obj.body);
+    var savePath = outputPath.replace(/\/$/, "") + "/collections/" + collectionName + "/" + filename;
+    var body = (obj.body === undefined) ? toMarkdown(obj.caption) : toMarkdown(obj.body);
     var title = (obj.title === undefined) ? obj.slug : obj.title;
-		var tagstr = obj.tags + "";
+    var tagstr = obj.tags + "";
 
-		meta += "title: \"" + title + "\"\r\n";
-		meta += "date: " + obj.date.substring(0, obj.date.lastIndexOf(':')) + "\r\n";
-		meta += "published: true\r\n";
+    meta += "title: \"" + title + "\"\r\n";
+    meta += "date: " + obj.date.substring(0, obj.date.lastIndexOf(':')) + "\r\n";
+    meta += "published: true\r\n";
 
     if (tagstr != "") meta += "tags: " + tagstr + "\r\n";
 
     var linkMatches = findLinks(body);
 
-    fs.mkdir(outputPath.replace(/\/$/, "") + "/images");
-    fs.mkdir(outputPath.replace(/\/$/, "") + "/collections");
-    fs.mkdir(outputPath.replace(/\/$/, "") + "/collections/" + collectionName);
+    fs.mkdirParent(outputPath.replace(/\/$/, "") + imageDirectoryPath);
+    fs.mkdirParent(outputPath.replace(/\/$/, "") + "/collections/" + collectionName);
 
     for (var lnk in linkMatches){
 
-      body = body.replace(linkMatches[lnk],'/images/' + path.basename(linkMatches[lnk]));
+      body = body.replace(linkMatches[lnk], imageDirectoryPath + '/' + path.basename(linkMatches[lnk]));
 
       var ext = path.extname(linkMatches[lnk]);
 
@@ -60,7 +60,7 @@ tumblr.get('/posts', {hostname: blogAddress}, function(json){
         (function(file, outputPath) {
           var shortname = path.basename(file);
           http.get(file, function(response) {
-          var outStream = fs.createWriteStream(outputPath.replace(/\/$/, "") + "/images/" + shortname);
+          var outStream = fs.createWriteStream(outputPath.replace(/\/$/, "") + imageDirectoryPath + "/" + shortname);
             response.pipe(outStream);
             console.log('Created image file');
           });
@@ -91,7 +91,7 @@ tumblr.get('/posts', {hostname: blogAddress}, function(json){
       routeObj.template = null;
       tumblrUrls.push(routeObj);
     }
-	}
+  }
 
   var saveRoutePath = outputPath.replace(/\/$/, "") + "/routes.json";
 
@@ -109,3 +109,18 @@ function findLinks(text) {
   var urlRegex = /([a-z\-_0-9\/\:\.]*\.(jpg|jpeg|png|gif))/ig;
   return text.match(urlRegex);
 }
+
+fs.mkdirParent = function(dirPath, mode, callback) {
+  //Call the standard fs.mkdir
+  fs.mkdir(dirPath, mode, function(error) {
+    //When it fail in this way, do the custom steps
+    if (error && error.errno === 34) {
+      //Create all the parents recursively
+      fs.mkdirParent(path.dirname(dirPath), mode, callback);
+      //And then the directory
+      fs.mkdirParent(dirPath, mode, callback);
+    }
+    //Manually run the callback since we used our own callback to do all these
+    callback && callback(error);
+  });
+};
