@@ -23,6 +23,19 @@ var tumblr = new tumblrApi(
 
 var template = "---\r\n{meta}---\r\n\r\n{content}";
 
+fs.mkdirParent = function(dirPath, mode, callback) {
+  fs.mkdir(dirPath, mode, function(error) {
+    if (error && error.errno === 34) {
+      fs.mkdirParent(path.dirname(dirPath), mode, callback);
+      fs.mkdirParent(dirPath, mode, callback);
+    }
+    callback && callback(error);
+  });
+}
+
+fs.mkdirParent(outputPath.replace(/\/$/, "") + imageDirectoryPath);
+fs.mkdirParent(outputPath.replace(/\/$/, "") + "/collections/" + collectionName);
+
 tumblr.get('/posts', {hostname: blogAddress}, function(json){
 
   var tumblrUrls = [];
@@ -45,12 +58,9 @@ tumblr.get('/posts', {hostname: blogAddress}, function(json){
 
     var linkMatches = findLinks(body);
 
-    fs.mkdirParent(outputPath.replace(/\/$/, "") + imageDirectoryPath);
-    fs.mkdirParent(outputPath.replace(/\/$/, "") + "/collections/" + collectionName);
-
     for (var lnk in linkMatches){
 
-      body = body.replace(linkMatches[lnk], imageDirectoryPath + '/' + path.basename(linkMatches[lnk]));
+     body = body.replace(linkMatches[lnk], imageDirectoryPath + '/' + path.basename(linkMatches[lnk]).replace('tumblr_','mixture_'));
 
       var ext = path.extname(linkMatches[lnk]);
 
@@ -109,18 +119,3 @@ function findLinks(text) {
   var urlRegex = /([a-z\-_0-9\/\:\.]*\.(jpg|jpeg|png|gif))/ig;
   return text.match(urlRegex);
 }
-
-fs.mkdirParent = function(dirPath, mode, callback) {
-  //Call the standard fs.mkdir
-  fs.mkdir(dirPath, mode, function(error) {
-    //When it fail in this way, do the custom steps
-    if (error && error.errno === 34) {
-      //Create all the parents recursively
-      fs.mkdirParent(path.dirname(dirPath), mode, callback);
-      //And then the directory
-      fs.mkdirParent(dirPath, mode, callback);
-    }
-    //Manually run the callback since we used our own callback to do all these
-    callback && callback(error);
-  });
-};
