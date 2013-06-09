@@ -70,7 +70,7 @@ tumblr.get('/posts', {hostname: blogAddress}, function(json){
         (function(file, outputPath) {
           var shortname = path.basename(file);
           http.get(file, function(response) {
-          var outStream = fs.createWriteStream(outputPath.replace(/\/$/, "") + imageDirectoryPath + "/" + shortname);
+          var outStream = fs.createWriteStream(outputPath.replace(/\/$/, "") + imageDirectoryPath + "/" + shortname.replace('tumblr_','mixture_'));
             response.pipe(outStream);
             console.log('Created image file');
           });
