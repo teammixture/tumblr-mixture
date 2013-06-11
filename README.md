@@ -1,7 +1,7 @@
 tumblr-mixture
 ==============
 
-This script will migrate a tumblr blog posts to a (Mixture)[http://mixture.io] ready format.
+This script will migrate a tumblr blog posts to a [Mixture](http://mixture.io) ready format.
 
 ### Notes:
 
