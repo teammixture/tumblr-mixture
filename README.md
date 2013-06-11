@@ -5,7 +5,7 @@ This script will migrate a tumblr blog posts to a (Mixture)[http://mixture.io) r
 
 ### Notes:
 
-There are some settins you will need to change to match your project and details:
+There are some settings you will need to change to match your project and details:
 
 - apiKey // http://www.tumblr.com/docs/en/api/v2
 - blogAddress // your-address.tumblr.com
